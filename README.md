@@ -13,7 +13,8 @@ This tool only currently works if your module sources fits the following
 ## Install
 
 Using go get 
-> go get github.com/fmterrorf/drdrie
+
+    go get github.com/fmterrorf/drdrie
 
 Precompiled executables
 
