@@ -1,4 +1,4 @@
-module github.com/fmterrorf/drdrie
+module github.com/fmterrorf/drdrei
 
 go 1.16
 

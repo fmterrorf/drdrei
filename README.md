@@ -1,4 +1,4 @@
-drdrie
+drdrei
 ------
 
 A tool that helps you detect outdated module sources
@@ -14,12 +14,12 @@ This tool only currently works if your module sources fits the following
 
 Using go get 
 
-    go get github.com/fmterrorf/drdrie
+    go get github.com/fmterrorf/drdrei
 
 Precompiled executables
 
-* See [releases](https://github.com/fmterrorf/drdrie/releases)
+* See [releases](https://github.com/fmterrorf/drdrei/releases)
 
 ## Usage
 
-    drdrie path/to/tfproject
+    drdrei path/to/tfproject
