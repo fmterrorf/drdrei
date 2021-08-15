@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 
@@ -14,15 +13,9 @@ import (
 	"github.com/hashicorp/terraform-config-inspect/tfconfig"
 )
 
-const (
-	gitURLPrefix = "git::"
-)
+const gitURLPrefix = "git::"
 
-var (
-	refTagsRe          = regexp.MustCompile(`refs/tags/(.*)-(\d\.\d\.\d.*)`)
-	gitRefRe           = regexp.MustCompile(`(.*)-(\d\.\d\.\d.*)`)
-	defaultIgnorePaths = []string{".terraform", ".git"}
-)
+var defaultIgnorePaths = []string{".terraform", ".git"}
 
 func main() {
 	targetPath := os.Args[1:][0]
