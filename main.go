@@ -56,19 +56,16 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to parse git URL ref %v", err)
 		}
-		matches := gitRefRe.FindAllStringSubmatch(ref, -1)
-		if len(matches) == 0 {
+		feat := parseToFeature(ref, gitRefRe)
+		if feat.isEmpty() {
 			continue
 		}
 		if !found {
 			found = true
 		}
-		match := matches[0]
-		feature := match[1]
-		version := match[2]
-		latestVer := latestTagByGitURL[gitURL.repoURL()][feature]
-		if latestVer != version {
-			fmt.Printf("%s %s:%d:0 \nusing: %s-%s \nlatest: %s-%s\n\n", mc.Name, mc.Pos.Filename, mc.Pos.Line, feature, version, feature, latestVer)
+		latestVer := latestTagByGitURL[gitURL.repoURL()][feat.Name]
+		if latestVer != feat.Version {
+			fmt.Printf("%s %s:%d:0 \nusing: %s-%s \nlatest: %s-%s\n\n", mc.Name, mc.Pos.Filename, mc.Pos.Line, feat.Name, feat.Version, feat.Name, latestVer)
 		}
 	}
 
@@ -127,21 +124,18 @@ func fetchLatestTag(url string) (map[string]string, error) {
 	lines := strings.Split(string(output), "\n")
 	versionsByFeatures := make(map[string][]*semver.Version)
 	for _, line := range lines {
-		matches := refTagsRe.FindAllStringSubmatch(line, -1)
-		if len(matches) == 0 {
+		feat := parseToFeature(line, refTagsRe)
+		if feat.isEmpty() {
 			continue
 		}
-		match := matches[0]
-		feature := match[1]
-		version := match[2]
-		v, err := semver.NewVersion(version)
+		v, err := semver.NewVersion(feat.Version)
 		if err != nil {
 			return nil, err
 		}
-		if versions, ok := versionsByFeatures[feature]; ok {
-			versionsByFeatures[feature] = append(versions, v)
+		if versions, ok := versionsByFeatures[feat.Name]; ok {
+			versionsByFeatures[feat.Name] = append(versions, v)
 		} else {
-			versionsByFeatures[feature] = []*semver.Version{v}
+			versionsByFeatures[feat.Name] = []*semver.Version{v}
 		}
 	}
 	latestVersionByFeature := make(map[string]string)
