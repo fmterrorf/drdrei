@@ -14,7 +14,7 @@ This tool only currently works if your module sources fits the following
 
 * Using go get 
 
-    go get github.com/fmterrorf/drdrei
+        go get github.com/fmterrorf/drdrei
 
 OR 
 
