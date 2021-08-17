@@ -1,4 +1,4 @@
-package drdrie
+package main
 
 import (
 	"github.com/fmterrorf/drdrei/cmd"
