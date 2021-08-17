@@ -6,5 +6,4 @@ import (
 
 func main() {
 	cmd.Execute()
-	// targetPath := os.Args[1:][0]
 }
