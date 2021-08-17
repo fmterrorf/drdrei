@@ -22,4 +22,12 @@ OR
 
 ## Usage
 
-    drdrei path/to/tfproject
+```sh
+  drdrei paths... [flags]
+
+Flags:
+      --config string             config file (default is $HOME/.drdrei.yaml)
+  -h, --help                      help for drdrei
+  -i, --ignorePaths stringArray   Path to ignore (default [.terraform,.git])
+  -r, --recursive                 Run audit recursively to given paths
+```
