@@ -18,6 +18,10 @@ var rootCmd = &cobra.Command{
 	Use:   "drdrei",
 	Short: "Detect outdated Terraform module sources",
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			cmd.Help()
+			os.Exit(0)
+		}
 		recursive, err := cmd.Flags().GetBool("recursive")
 		if err != nil {
 			log.Fatal(err)
