@@ -15,7 +15,7 @@ import (
 var cfgFile string
 
 var rootCmd = &cobra.Command{
-	Use:   "drdrei",
+	Use:   "drdrei paths...",
 	Short: "Detect outdated Terraform module sources",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
