@@ -29,9 +29,12 @@ func (ar auditResult) isUsingLatestVersion() bool {
 
 func (ar auditResult) printToConsole(printAsJSON bool) error {
 	if printAsJSON {
-		res, err := json.Marshal(ar)
-		fmt.Println(string(res))
-		return err
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "    ")
+		if err := enc.Encode(ar); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	fmt.Println(ar)
