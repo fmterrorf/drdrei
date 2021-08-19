@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -15,18 +16,65 @@ import (
 
 const gitURLPrefix = "git::"
 
-func RunAudit(targetPaths []string, recursive bool, ignorePaths []string) {
-	var dirs []string
+type auditResult struct {
+	Pos            tfconfig.SourcePos
+	FeatureName    string
+	CurrentVersion string
+	LatestVersion  string
+}
+
+func (ar auditResult) isUsingOutdatedVersion() bool {
+	return ar.CurrentVersion != ar.LatestVersion
+}
+
+func printToConsole(results []auditResult, printAsJSON bool) error {
+	if printAsJSON {
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "    ")
+		if err := enc.Encode(results); err != nil {
+			return err
+		}
+		return nil
+	}
+	for _, ar := range results {
+		fmt.Println(ar)
+	}
+	return nil
+}
+
+func (ar auditResult) String() string {
+	return fmt.Sprintf("%s %s:%d:0 \nusing: %s-%s \nlatest: %s-%s\n\n",
+		ar.FeatureName, ar.Pos.Filename, ar.Pos.Line, ar.FeatureName,
+		ar.CurrentVersion, ar.FeatureName, ar.LatestVersion)
+}
+
+func (ar auditResult) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Feature string `json:"feature"`
+		Pos     string `json:"pos"`
+		Current string `json:"current"`
+		Latest  string `json:"latest"`
+	}{
+		Feature: ar.FeatureName,
+		Pos:     fmt.Sprintf("%s:%d", ar.Pos.Filename, ar.Pos.Line),
+		Current: ar.CurrentVersion,
+		Latest:  ar.LatestVersion,
+	})
+}
+
+func RunAudit(targetPaths []string, recursive bool, ignorePaths []string, printAsJSON bool) {
+	paths := uniqString(targetPaths)
+	dirs := make([]string, 0)
 	if recursive {
-		for _, p := range targetPaths {
-			found, err := getDirs(p, ignorePaths)
+		for _, p := range paths {
+			found, err := walkDirs(p, ignorePaths)
 			if err != nil {
 				log.Fatalf("Failed to list dirs %v", err)
 			}
 			dirs = append(dirs, found...)
 		}
 	} else {
-		dirs = targetPaths
+		dirs = paths
 	}
 	mcs := getExternalModuleCalls(dirs)
 	gitURLKv := make(map[string]bool)
@@ -47,7 +95,7 @@ func RunAudit(targetPaths []string, recursive bool, ignorePaths []string) {
 		}
 		latestTagByGitURL[k] = tags
 	}
-	found := false
+	results := make([]auditResult, 0)
 	for _, mc := range mcs {
 		gitURL := mc.gitURL()
 		ref, err := gitURL.ref()
@@ -58,22 +106,27 @@ func RunAudit(targetPaths []string, recursive bool, ignorePaths []string) {
 		if feat.isEmpty() {
 			continue
 		}
-		if !found {
-			found = true
+		ar := auditResult{
+			Pos:            mc.Pos,
+			FeatureName:    feat.Name,
+			CurrentVersion: feat.Version,
+			LatestVersion:  latestTagByGitURL[gitURL.repoURL()][feat.Name],
 		}
-		latestVer := latestTagByGitURL[gitURL.repoURL()][feat.Name]
-		if latestVer != feat.Version {
-			fmt.Printf("%s %s:%d:0 \nusing: %s-%s \nlatest: %s-%s\n\n", mc.Name, mc.Pos.Filename, mc.Pos.Line, feat.Name, feat.Version, feat.Name, latestVer)
+		if ar.isUsingOutdatedVersion() {
+			results = append(results, ar)
 		}
 	}
-
-	if !found {
-		fmt.Printf("You are all up to date")
+	if len(results) > 0 {
+		if err := printToConsole(results, printAsJSON); err != nil {
+			log.Fatalf("Failed to print results to console %s", err)
+		}
+		return
 	}
+	fmt.Printf("You are all up to date")
 }
 
-// getDirs collects all the children dir of sourceDir ignoring ignorePaths
-func getDirs(sourceDir string, ignorePaths []string) ([]string, error) {
+// walkDirs collects all the children dir of sourceDir ignoring ignorePaths
+func walkDirs(sourceDir string, ignorePaths []string) ([]string, error) {
 	dirs := make([]string, 0)
 	ignorePathsKV := make(map[string]bool)
 	for _, v := range ignorePaths {
