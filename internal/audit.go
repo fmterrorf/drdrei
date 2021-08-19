@@ -117,7 +117,9 @@ func RunAudit(targetPaths []string, recursive bool, ignorePaths []string, printA
 		}
 	}
 	if len(results) > 0 {
-		printToConsole(results, printAsJSON)
+		if err := printToConsole(results, printAsJSON); err != nil {
+			log.Fatalf("Failed to print results to console %s", err)
+		}
 		return
 	}
 	fmt.Printf("You are all up to date")
