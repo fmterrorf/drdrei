@@ -47,7 +47,7 @@ func (ar auditResult) String() string {
 		ar.CurrentVersion, ar.FeatureName, ar.LatestVersion)
 }
 
-func (ar *auditResult) MarshallJSON() ([]byte, error) {
+func (ar auditResult) MarshallJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Feature string `json:"feature"`
 		Pos     string `json:"pos"`
