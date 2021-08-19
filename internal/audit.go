@@ -23,8 +23,8 @@ type auditResult struct {
 	LatestVersion  string
 }
 
-func (ar auditResult) isUsingLatestVersion() bool {
-	return ar.CurrentVersion == ar.LatestVersion
+func (ar auditResult) isUsingOutdatedVersion() bool {
+	return ar.CurrentVersion != ar.LatestVersion
 }
 
 func printToConsole(results []auditResult, printAsJSON bool) error {
@@ -112,7 +112,7 @@ func RunAudit(targetPaths []string, recursive bool, ignorePaths []string, printA
 			CurrentVersion: feat.Version,
 			LatestVersion:  latestTagByGitURL[gitURL.repoURL()][feat.Name],
 		}
-		if ar.isUsingLatestVersion() {
+		if ar.isUsingOutdatedVersion() {
 			results = append(results, ar)
 		}
 	}
