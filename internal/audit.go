@@ -63,7 +63,7 @@ func (ar *auditResult) MarshallJSON() ([]byte, error) {
 
 func RunAudit(targetPaths []string, recursive bool, ignorePaths []string, printAsJSON bool) {
 	paths := uniqString(targetPaths)
-	dirs := paths
+	dirs := make([]string, 0)
 	if recursive {
 		for _, p := range paths {
 			found, err := walkDirs(p, ignorePaths)
@@ -72,6 +72,8 @@ func RunAudit(targetPaths []string, recursive bool, ignorePaths []string, printA
 			}
 			dirs = append(dirs, found...)
 		}
+	} else {
+		dirs = paths
 	}
 	mcs := getExternalModuleCalls(dirs)
 	gitURLKv := make(map[string]bool)
