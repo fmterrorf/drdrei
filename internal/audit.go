@@ -27,17 +27,18 @@ func (ar auditResult) isUsingLatestVersion() bool {
 	return ar.CurrentVersion == ar.LatestVersion
 }
 
-func (ar auditResult) printToConsole(printAsJSON bool) error {
+func printToConsole(results []auditResult, printAsJSON bool) error {
 	if printAsJSON {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "    ")
-		if err := enc.Encode(ar); err != nil {
+		if err := enc.Encode(results); err != nil {
 			return err
 		}
 		return nil
 	}
-
-	fmt.Println(ar)
+	for _, ar := range results {
+		fmt.Println(ar)
+	}
 	return nil
 }
 
@@ -47,7 +48,7 @@ func (ar auditResult) String() string {
 		ar.CurrentVersion, ar.FeatureName, ar.LatestVersion)
 }
 
-func (ar auditResult) MarshallJSON() ([]byte, error) {
+func (ar auditResult) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Feature string `json:"feature"`
 		Pos     string `json:"pos"`
@@ -94,7 +95,7 @@ func RunAudit(targetPaths []string, recursive bool, ignorePaths []string, printA
 		}
 		latestTagByGitURL[k] = tags
 	}
-	found := false
+	results := make([]auditResult, 0)
 	for _, mc := range mcs {
 		gitURL := mc.gitURL()
 		ref, err := gitURL.ref()
@@ -105,9 +106,6 @@ func RunAudit(targetPaths []string, recursive bool, ignorePaths []string, printA
 		if feat.isEmpty() {
 			continue
 		}
-		if !found {
-			found = true
-		}
 		ar := auditResult{
 			Pos:            mc.Pos,
 			FeatureName:    feat.Name,
@@ -115,15 +113,14 @@ func RunAudit(targetPaths []string, recursive bool, ignorePaths []string, printA
 			LatestVersion:  latestTagByGitURL[gitURL.repoURL()][feat.Name],
 		}
 		if ar.isUsingLatestVersion() {
-			if err := ar.printToConsole(printAsJSON); err != nil {
-				log.Fatalf("Failed to print audit result %v", err)
-			}
+			results = append(results, ar)
 		}
 	}
-
-	if !found {
-		fmt.Printf("You are all up to date")
+	if len(results) > 0 {
+		printToConsole(results, printAsJSON)
+		return
 	}
+	fmt.Printf("You are all up to date")
 }
 
 // walkDirs collects all the children dir of sourceDir ignoring ignorePaths
